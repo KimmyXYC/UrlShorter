@@ -30,8 +30,9 @@ class Urllib
     function getLongUrl(string $short): array
     {
         try {
-            $sel = $this->conn->prepare("SELECT `url` FROM `shorter` WHERE `short` = ? ");
-            $sel->execute([$short]);
+            $sel = $this->conn->prepare("SELECT url FROM shorter WHERE short = :short ");
+            $sel->bindParam(':short', $short);
+            $sel->execute();
             $res = $sel->fetch();
             if ($res) return ['code' => 0, 'msg' => 'success', 'url' => $res['url']];
             return ['code' => 404, 'msg' => 'not found', 'data' => ''];
@@ -62,7 +63,7 @@ class Urllib
             if ($this->checkShort($url, $short)) return ['code' => 1006, 'msg' => '自定义短链接已存在', 'url' => ''];
             return ['code' => 0, 'msg' => 'success', 'url' => WEB_URL . $this->addShorter($url, trim($short))];
         } catch (Exception $e) {
-            $arr = ['code' => 99999, 'msg' => '系统错误,请重试', 'url' => ''];
+            $arr = ['code' => 99999, 'msg' => '系统错误,请重试', 'url' => ''];
             if (DEBUG) $arr['err'] = $e->getMessage();
             return $arr;
         }
@@ -76,8 +77,9 @@ class Urllib
      */
     public function checkShort(string $url, string $short): bool
     {
-        $sel = $this->conn->prepare("SELECT `url` FROM `shorter` WHERE `short` = ? ");
-        $sel->execute([$short]);
+        $sel = $this->conn->prepare("SELECT url FROM shorter WHERE short = :short ");
+        $sel->bindParam(':short', $short);
+        $sel->execute();
         $res = $sel->fetch();
         if (!$res) return false;
         if ($url == $res['url']) :
@@ -116,12 +118,13 @@ class Urllib
         if ($this->AlreadyExists) return $short;
         //检测是否已经存在
         if (!$this->ifUserDefine) {
-            $sel = $this->conn->prepare("SELECT `short` FROM `shorter` WHERE `url` = ? ");
-            $sel->execute([$url]);
+            $sel = $this->conn->prepare("SELECT short FROM shorter WHERE url = :url ");
+            $sel->bindParam(':url', $url);
+            $sel->execute();
             $res = $sel->fetch();
             if ($res) return $res['short'];
         }
-        $insert = $this->conn->prepare("INSERT INTO `shorter` VALUES ('0', ? , ? , ? , ? )");
+        $insert = $this->conn->prepare("INSERT INTO shorter (short, url, time, ip) VALUES (:short, :url, :time, :ip)");
         $insert->execute([$short, $url, time(), Tool::getIp()]);
         if ($insert->rowCount() === 0) throw new \Exception('写入短链接失败');
         return $short;
@@ -135,7 +138,7 @@ class Urllib
     {
         while (True) { //重复检测
             $short = Tool::randStr(is_numeric(SHORT_LEN) ? SHORT_LEN : mt_rand(4, 6));
-            $checkIfExists = $this->conn->prepare("SELECT * FROM `shorter` WHERE `short` = :short ");
+            $checkIfExists = $this->conn->prepare("SELECT * FROM shorter WHERE short = :short ");
             $checkIfExists->bindParam(':short', $short);
             $checkIfExists->execute();
             if ($checkIfExists->rowCount() == 0) break;
