@@ -8,7 +8,7 @@
 
 # 安装
 
-- step 1: `git clone git@github.com:soxft/UrlShorter.git`
+- step 1: `git clone https://github.com/KimmyXYC/UrlShorter.git`
 - step 2: 修改 ~/api/config.php , 填写您的 postgresql 信息 以及网址等信息
 - step 3: 导入 ~/postgres.sql 至您的数据库
 - step 4: 配伪静态 (~/nginx.conf 或 ~/.htaccess) 目前仅有 nginx 与 Apache 的伪静态配置.
